@@ -28,7 +28,7 @@ type AllDataType struct {
 func main() { //nolint:funlen
 
 	allData := make(map[int]AllDataType)
-	start := 43500
+	start := 43651
 	cont := true
 	limit := 50
 	ind := 0
