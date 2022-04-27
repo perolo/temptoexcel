@@ -1,7 +1,15 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
-func Main_Dummytest(t *testing.T) {
-	
+func Test_Main_Dummytest(t *testing.T) {
+
+	str := fmt.Sprintf("Dummy string \n")
+	if str != "Dummy string \n" {
+		t.Error(str)
+	}
+
 }
