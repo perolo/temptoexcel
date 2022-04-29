@@ -7,6 +7,8 @@ import (
 	"github.com/magiconair/properties"
 	"log"
 	"net/http"
+	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -25,6 +27,7 @@ var cfg Config
 type Config struct {
 	Start       int    `properties:"start"`
 	File        string `properties:"file"`
+	Template    string `properties:"template"`
 	TempServer  string `properties:"tempserver"`
 	SensorNames string `properties:"sensornames"`
 }
@@ -41,19 +44,57 @@ func main() { //nolint:funlen
 	}
 	sensors := strings.Split(cfg.SensorNames, ",")
 
-	excelutils.NewFile()
-	/*
-		excelutils.SetCellFontHeader()
-		excelutils.WiteCellln("Introduction")
-		excelutils.WiteCellln("Please Do not edit this page!")
-		t := time.Now()
-		excelutils.WiteCellln("Created by: " + "ConfUser" + " : " + t.Format(time.RFC3339))
-		excelutils.WiteCellln("")
+	if cfg.Template != "" {
+		err := excelutils.OpenFile(cfg.Template)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		opt := excelutils.Options{SheetName: "Sensor Data"}
+		excelutils.NewFile(&opt)
+	}
+	err := excelutils.SelectSheet("Info")
+	if err != nil {
+		err = excelutils.NewSheet("Info")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	excelutils.SetCellFontHeader()
+	excelutils.WiteCellln("Introduction")
+	excelutils.WiteCellln("Please Do not edit this page!")
+	t := time.Now()
+	application := os.Args[0]
 
-		excelutils.SetCellFontHeader2()
-		excelutils.WiteCellln("Sensor and Temp")
-		excelutils.NextLine()
-	*/
+	excelutils.WiteCellln("Created by: " + application + " : " + t.Format(time.RFC3339))
+	excelutils.WiteCellln("")
+	if len(os.Args) > 1 {
+		for _, arg := range os.Args {
+			excelutils.WiteCellln("Arg: " + arg)
+		}
+	}
+	excelutils.WiteCellln("")
+	excelutils.SetCellFontHeader2()
+	excelutils.WiteCellln("Properties")
+
+	v := reflect.ValueOf(cfg)
+
+	//		values := make([]interface{}, v.NumField())
+	typeOfS := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		str := fmt.Sprintf("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
+		excelutils.WiteCellln(str)
+
+	}
+	excelutils.SetAutoColWidth()
+	//excelutils.SetCellFontHeader2()
+	//excelutils.WiteCellln("Sensor and Temp")
+	//excelutils.NextLine()
+	err = excelutils.SelectSheet("Sensor Data")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	excelutils.AutoFilterStart()
 	excelutils.SetTableHeader()
 	excelutils.WiteCell("Time")
@@ -131,8 +172,8 @@ func main() { //nolint:funlen
 		start = start + limit
 	}
 
-	excelutils.SetAutoColWidth()
 	excelutils.AutoFilterEnd()
+	excelutils.SetAutoColWidth()
 
 	// Save xlsx file by the given path.
 	timestr := lastTimestamp.Format("2006-01-02_15-04-05")
