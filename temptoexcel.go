@@ -116,7 +116,8 @@ func main() { //nolint:funlen
 	limit := 50
 	//	ind := 0
 	skipfirst := true
-	colcount := 0
+	lastmeas := 0
+	row := 2
 	for cont {
 		var v SensorDataType
 		resp, err := http.Get(fmt.Sprintf(cfg.TempServer+"/start/%v", start))
@@ -135,32 +136,31 @@ func main() { //nolint:funlen
 			if skipfirst {
 				if meas.Sensor == 0 {
 					skipfirst = false
+					lastmeas = -1
 				}
 			}
 			if !skipfirst {
-				if meas.Sensor == 0 || colcount == 0 {
-					excelutils.WiteCellnc(meas.TimeStamp)
-					excelutils.WiteCellnc(meas.ID)
-					for colcount < meas.Sensor {
-						excelutils.WiteCellnc("")
-						colcount++
-					}
+				if lastmeas > meas.Sensor {
+					//					excelutils.NextLine()
+					lastmeas = -1
+					row++
 				}
-				if colcount == meas.Sensor {
-					excelutils.WiteCellnc(meas.Temperature)
-					colcount++
+				if lastmeas < meas.Sensor {
+					//					excelutils.SetCell(meas.TimeStamp.Format("2006-01-02 15:04:05"), 1, row)
+					excelutils.SetCell(meas.TimeStamp, 1, row)
+					excelutils.SetCell(meas.ID, 2, row)
+					lastTimestamp = meas.TimeStamp
+					lastmeas = -1
+				}
+				if lastmeas < meas.Sensor {
+					//					strr := strconv.FormatFloat(meas.Temperature, 'f', 2, 64)
+					excelutils.SetCell(meas.Temperature, meas.Sensor+3, row)
+					lastmeas = meas.Sensor
 				} else {
-					fmt.Printf("Que %s colcount: %v Sensor: %v\n", meas.TimeStamp, colcount, meas.Sensor)
-					colcount = meas.Sensor
+					fmt.Printf("Que %s row: %v Sensor: %v\n", meas.TimeStamp, row, meas.Sensor)
 				}
 				if meas.ID == 44190 {
-					fmt.Printf("Que %s colcount: %v Sensor: %v\n", meas.TimeStamp, colcount, meas.Sensor)
-
-				}
-				if meas.Sensor == 5 {
-					excelutils.NextLine()
-					colcount = 0
-					lastTimestamp = meas.TimeStamp
+					fmt.Printf("Que %s row: %v Sensor: %v\n", meas.TimeStamp, row, meas.Sensor)
 				}
 			}
 		}
