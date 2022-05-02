@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/magiconair/properties v1.8.6
-	github.com/perolo/excellogger v0.0.0-20220502095559-abc577625eac
+	github.com/perolo/excellogger v0.0.0-20220502103720-bdfef1a3d6a5
 )
 
 require (
