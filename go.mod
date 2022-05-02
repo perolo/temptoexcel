@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/magiconair/properties v1.8.6
-	github.com/perolo/excel-utils v0.0.0-20220429081642-791fcfa85ce0
+	github.com/perolo/excellogger v0.0.0-20220502095559-abc577625eac
 )
 
 require (
