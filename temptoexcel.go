@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	excelutils "github.com/perolo/excel-utils"
+	"github.com/perolo/excellogger"
 )
 
 type SensorDataType []struct {
@@ -45,37 +45,37 @@ func main() { //nolint:funlen
 	sensors := strings.Split(cfg.SensorNames, ",")
 
 	if cfg.Template != "" {
-		err := excelutils.OpenFile(cfg.Template)
+		err := excellogger.OpenFile(cfg.Template)
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		opt := excelutils.Options{SheetName: "Sensor Data"}
-		excelutils.NewFile(&opt)
+		opt := excellogger.Options{SheetName: "Sensor Data"}
+		excellogger.NewFile(&opt)
 	}
-	err := excelutils.SelectSheet("Info")
+	err := excellogger.SelectSheet("Info")
 	if err != nil {
-		err = excelutils.NewSheet("Info")
+		err = excellogger.NewSheet("Info")
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	excelutils.SetCellFontHeader()
-	excelutils.WiteCellln("Introduction")
-	excelutils.WiteCellln("Please Do not edit this page!")
+	excellogger.SetCellFontHeader()
+	excellogger.WiteCellln("Introduction")
+	excellogger.WiteCellln("Please Do not edit this page!")
 	t := time.Now()
 	application := os.Args[0]
 
-	excelutils.WiteCellln("Created by: " + application + " : " + t.Format(time.RFC3339))
-	excelutils.WiteCellln("")
+	excellogger.WiteCellln("Created by: " + application + " : " + t.Format(time.RFC3339))
+	excellogger.WiteCellln("")
 	if len(os.Args) > 1 {
 		for _, arg := range os.Args {
-			excelutils.WiteCellln("Arg: " + arg)
+			excellogger.WiteCellln("Arg: " + arg)
 		}
 	}
-	excelutils.WiteCellln("")
-	excelutils.SetCellFontHeader2()
-	excelutils.WiteCellln("Properties")
+	excellogger.WiteCellln("")
+	excellogger.SetCellFontHeader2()
+	excellogger.WiteCellln("Properties")
 
 	v := reflect.ValueOf(cfg)
 
@@ -83,33 +83,33 @@ func main() { //nolint:funlen
 	typeOfS := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		str := fmt.Sprintf("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
-		excelutils.WiteCellln(str)
+		excellogger.WiteCellln(str)
 
 	}
-	excelutils.SetAutoColWidth()
-	//excelutils.SetCellFontHeader2()
-	//excelutils.WiteCellln("Sensor and Temp")
-	//excelutils.NextLine()
-	err = excelutils.SelectSheet("Sensor Data")
+	excellogger.SetAutoColWidth()
+	//excellogger.SetCellFontHeader2()
+	//excellogger.WiteCellln("Sensor and Temp")
+	//excellogger.NextLine()
+	err = excellogger.SelectSheet("Sensor Data")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	excelutils.AutoFilterStart()
-	excelutils.SetTableHeader()
-	excelutils.WiteCell("Time")
-	excelutils.SetTableHeader()
-	excelutils.NextCol()
-	excelutils.WiteCell("ID")
-	excelutils.SetTableHeader()
-	excelutils.NextCol()
+	excellogger.AutoFilterStart()
+	excellogger.SetTableHeader()
+	excellogger.WiteCell("Time")
+	excellogger.SetTableHeader()
+	excellogger.NextCol()
+	excellogger.WiteCell("ID")
+	excellogger.SetTableHeader()
+	excellogger.NextCol()
 
 	for _, name := range sensors {
-		excelutils.WiteCell(name)
-		excelutils.SetTableHeader()
-		excelutils.NextCol()
+		excellogger.WiteCell(name)
+		excellogger.SetTableHeader()
+		excellogger.NextCol()
 	}
-	excelutils.NextLine()
+	excellogger.NextLine()
 
 	start := cfg.Start
 	cont := true
@@ -141,20 +141,20 @@ func main() { //nolint:funlen
 			}
 			if !skipfirst {
 				if lastmeas > meas.Sensor {
-					//					excelutils.NextLine()
+					//					excellogger.NextLine()
 					lastmeas = -1
 					row++
 				}
 				if lastmeas < meas.Sensor {
-					//					excelutils.SetCell(meas.TimeStamp.Format("2006-01-02 15:04:05"), 1, row)
-					excelutils.SetCell(meas.TimeStamp, 1, row)
-					excelutils.SetCell(meas.ID, 2, row)
+					//					excellogger.SetCell(meas.TimeStamp.Format("2006-01-02 15:04:05"), 1, row)
+					excellogger.SetCell(meas.TimeStamp, 1, row)
+					excellogger.SetCell(meas.ID, 2, row)
 					lastTimestamp = meas.TimeStamp
 					lastmeas = -1
 				}
 				if lastmeas < meas.Sensor {
 					//					strr := strconv.FormatFloat(meas.Temperature, 'f', 2, 64)
-					excelutils.SetCell(meas.Temperature, meas.Sensor+3, row)
+					excellogger.SetCell(meas.Temperature, meas.Sensor+3, row)
 					lastmeas = meas.Sensor
 				} else {
 					fmt.Printf("Que %s row: %v Sensor: %v\n", meas.TimeStamp, row, meas.Sensor)
@@ -172,12 +172,12 @@ func main() { //nolint:funlen
 		start = start + limit
 	}
 
-	excelutils.AutoFilterEnd()
-	excelutils.SetAutoColWidth()
+	excellogger.AutoFilterEnd()
+	excellogger.SetAutoColWidth()
 
 	// Save xlsx file by the given path.
 	timestr := lastTimestamp.Format("2006-01-02_15-04-05")
 	name := fmt.Sprintf(cfg.File, timestr)
-	excelutils.SaveAs(name)
+	excellogger.SaveAs(name)
 
 }
