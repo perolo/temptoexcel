@@ -30,6 +30,7 @@ type Config struct {
 	Template    string `properties:"template"`
 	TempServer  string `properties:"tempserver"`
 	SensorNames string `properties:"sensornames"`
+	Mode        string `properties:"mode"`
 }
 
 func main() { //nolint:funlen
@@ -43,6 +44,15 @@ func main() { //nolint:funlen
 		log.Fatal(err)
 	}
 	sensors := strings.Split(cfg.SensorNames, ",")
+
+	start := 0
+	if cfg.Mode == "last24" {
+		start, _ = getSensorDataLast()
+		start = start - 17280 //TODO Calculate from timestamps and number of sensors
+
+	} else {
+		start = cfg.Start
+	}
 
 	if cfg.Template != "" {
 		err := excellogger.OpenFile(cfg.Template)
@@ -67,10 +77,12 @@ func main() { //nolint:funlen
 	application := os.Args[0]
 
 	excellogger.WiteCellln("Created by: " + application + " : " + t.Format(time.RFC3339))
+	fmt.Printf("Application : %s started\n", application)
 	excellogger.WiteCellln("")
 	if len(os.Args) > 1 {
 		for _, arg := range os.Args {
 			excellogger.WiteCellln("Arg: " + arg)
+			fmt.Printf("Arg : %s \n", arg)
 		}
 	}
 	excellogger.WiteCellln("")
@@ -84,7 +96,7 @@ func main() { //nolint:funlen
 	for i := 0; i < v.NumField(); i++ {
 		str := fmt.Sprintf("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
 		excellogger.WiteCellln(str)
-
+		fmt.Printf(str)
 	}
 	excellogger.SetAutoColWidth()
 	//excellogger.SetCellFontHeader2()
@@ -111,7 +123,6 @@ func main() { //nolint:funlen
 	}
 	excellogger.NextLine()
 
-	start := cfg.Start
 	cont := true
 	limit := 50
 	//	ind := 0
@@ -119,17 +130,7 @@ func main() { //nolint:funlen
 	lastmeas := 0
 	row := 2
 	for cont {
-		var v SensorDataType
-		resp, err := http.Get(fmt.Sprintf(cfg.TempServer+"/start/%v", start))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer resp.Body.Close()
-
-		err = json.NewDecoder(resp.Body).Decode(&v)
-		if err != nil {
-			log.Fatal(err)
-		}
+		v := getSensorDataStart(start)
 
 		for _, meas := range v {
 			// skip until first sensor found
@@ -159,9 +160,6 @@ func main() { //nolint:funlen
 				} else {
 					fmt.Printf("Que %s row: %v Sensor: %v\n", meas.TimeStamp, row, meas.Sensor)
 				}
-				if meas.ID == 44190 {
-					fmt.Printf("Que %s row: %v Sensor: %v\n", meas.TimeStamp, row, meas.Sensor)
-				}
 			}
 		}
 
@@ -180,4 +178,35 @@ func main() { //nolint:funlen
 	name := fmt.Sprintf(cfg.File, timestr)
 	excellogger.SaveAs(name)
 
+}
+
+func getSensorDataLast() (int, int) {
+	var v SensorDataType
+	resp, err := http.Get(fmt.Sprintf(cfg.TempServer + "/last"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&v)
+	if err != nil {
+		log.Fatal(err)
+	}
+	lastid := v[len(v)-1].ID
+	return lastid, 1000
+}
+
+func getSensorDataStart(start int) SensorDataType {
+	var v SensorDataType
+	resp, err := http.Get(fmt.Sprintf(cfg.TempServer+"/start/%v", start))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&v)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return v
 }
